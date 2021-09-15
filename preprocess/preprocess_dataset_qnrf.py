@@ -59,7 +59,7 @@ def main(input_dataset_path, output_dataset_path, min_size=512, max_size=2048):
 				sub_save_dir = os.path.join(output_dataset_path, sub_phase)
 				if not os.path.exists(sub_save_dir):
 					os.makedirs(sub_save_dir)
-				with open(os.path.join(dir_name, 'qnrf_{}.txt'.format(sub_phase))) as f:
+				with open(os.path.join(input_dataset_path, 'qnrf_{}.txt'.format(sub_phase))) as f:
 					for i in f:
 						im_path = os.path.join(sub_dir, i.strip())
 						name = os.path.basename(im_path)
