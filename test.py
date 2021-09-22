@@ -62,4 +62,4 @@ for inputs, count, name in dataloader:
 image_errs = np.array(image_errs)
 mse = np.sqrt(np.mean(np.square(image_errs)))
 mae = np.mean(np.abs(image_errs))
-print('{}: mae {}, mse {}\n'.format(model_path, mae, mse))
+print(f'{model_path}: mae {mae}, mse {mse}\n')

@@ -98,7 +98,7 @@ def main(input_dataset_path, output_dataset_path, min_size=384, max_size=1920):
 		sub_save_dir = os.path.join(output_dataset_path, phase)
 		if not os.path.exists(sub_save_dir):
 			os.makedirs(sub_save_dir)
-		with open(os.path.join(input_dataset_path, '{}.txt'.format(phase))) as f:
+		with open(os.path.join(input_dataset_path, f'{phase}.txt')) as f:
 			lines = f.readlines()
 			for i in lines:
 				i = i.strip().split(' ')[0]
@@ -119,7 +119,7 @@ def main(input_dataset_path, output_dataset_path, min_size=384, max_size=1920):
 		sub_save_dir = os.path.join(output_dataset_path, phase)
 		if not os.path.exists(sub_save_dir):
 			os.makedirs(sub_save_dir)
-		with open(os.path.join(input_dataset_path, '{}.txt'.format(phase))) as f:
+		with open(os.path.join(input_dataset_path, f'{phase}.txt')) as f:
 			lines = f.readlines()
 			for i in lines:
 				i = i.strip().split(' ')[0]

@@ -29,21 +29,21 @@ class Trainer(object):
 
 	def setup(self):
 		args = self.args
-		sub_dir = 'input-{}_wot-{}_wtv-{}_reg-{}_nIter-{}_normCood-{}'.format(args.crop_size, args.wot, args.wtv, args.reg, args.num_of_iter_in_ot, args.norm_cood)
+		sub_dir = f'input-{args.crop_size}_wot-{args.wot}_wtv-{args.wtv}_reg-{args.reg}_nIter-{args.num_of_iter_in_ot}_normCood-{args.norm_cood}'
 
 		self.save_dir = os.path.join('ckpts', sub_dir)
 		if not os.path.exists(self.save_dir):
 			os.makedirs(self.save_dir)
 
 		time_str = datetime.strftime(datetime.now(), '%m%d-%H%M%S')
-		self.logger = log_utils.get_logger(os.path.join(self.save_dir, 'train-{:s}.log'.format(time_str)))
+		self.logger = log_utils.get_logger(os.path.join(self.save_dir, f'train-{time_str:s}.log'))
 		log_utils.print_config(vars(args), self.logger)
 
 		if torch.cuda.is_available():
 			self.device = torch.device("cuda")
 			self.device_count = torch.cuda.device_count()
 			assert self.device_count == 1
-			self.logger.info('using {} gpus'.format(self.device_count))
+			self.logger.info('using {self.device_count} gpus')
 		else:
 			raise Exception("gpu is not available")
 
@@ -92,7 +92,7 @@ class Trainer(object):
 		"""training process"""
 		args = self.args
 		for epoch in range(self.start_epoch, args.max_epoch + 1):
-			self.logger.info('-' * 5 + 'Epoch {}/{}'.format(epoch, args.max_epoch) + '-' * 5)
+			self.logger.info(f'----- Epoch {epoch}/{args.max_epoch} -----')
 			self.epoch = epoch
 			self.train_eopch()
 			if epoch % args.val_epoch == 0 and epoch >= args.val_start:
@@ -149,9 +149,9 @@ class Trainer(object):
 				epoch_mse.update(np.mean(pred_err * pred_err), N)
 				epoch_mae.update(np.mean(abs(pred_err)), N)
 
-		self.logger.info('Epoch {} Train, Loss: {:.2f}, OT Loss: {:.2e}, Wass Distance: {:.2f}, OT obj value: {:.2f}, ' 'Count Loss: {:.2f}, TV Loss: {:.2f}, MSE: {:.2f} MAE: {:.2f}, Cost {:.1f} sec'.format(self.epoch, epoch_loss.get_avg(), epoch_ot_loss.get_avg(), epoch_wd.get_avg(), epoch_ot_obj_value.get_avg(), epoch_count_loss.get_avg(), epoch_tv_loss.get_avg(), np.sqrt(epoch_mse.get_avg()), epoch_mae.get_avg(), time.time() - epoch_start))
+		self.logger.info(f'Epoch {self.epoch} Train, Loss: {epoch_loss.get_avg():.2f}, OT Loss: {epoch_ot_loss.get_avg():.2e}, Wass Distance: {epoch_wd.get_avg():.2f}, OT obj value: {epoch_ot_obj_value.get_avg():.2f}, Count Loss: {epoch_count_loss.get_avg():.2f}, TV Loss: {epoch_tv_loss.get_avg():.2f}, MSE: {np.sqrt(epoch_mse.get_avg()):.2f} MAE: {epoch_mae.get_avg():.2f}, Cost {time.time() - epoch_start:.1f} sec')
 		model_state_dic = self.model.state_dict()
-		save_path = os.path.join(self.save_dir, '{}_ckpt.tar'.format(self.epoch))
+		save_path = os.path.join(self.save_dir, f'{self.epoch}_ckpt.tar')
 		torch.save({'epoch': self.epoch, 'optimizer_state_dict': self.optimizer.state_dict(), 'model_state_dict': model_state_dic}, save_path)
 		self.save_list.append(save_path)
 
@@ -171,12 +171,12 @@ class Trainer(object):
 		epoch_res = np.array(epoch_res)
 		mse = np.sqrt(np.mean(np.square(epoch_res)))
 		mae = np.mean(np.abs(epoch_res))
-		self.logger.info('Epoch {} Val, MSE: {:.2f} MAE: {:.2f}, Cost {:.1f} sec'.format(self.epoch, mse, mae, time.time() - epoch_start))
+		self.logger.info(f'Epoch {self.epoch} Val, MSE: {mse:.2f} MAE: {mae:.2f}, Cost {time.time() - epoch_start:.1f} sec')
 
 		model_state_dic = self.model.state_dict()
 		if (2.0 * mse + mae) < (2.0 * self.best_mse + self.best_mae):
 			self.best_mse = mse
 			self.best_mae = mae
-			self.logger.info("save best mse {:.2f} mae {:.2f} model epoch {}".format(self.best_mse, self.best_mae, self.epoch))
-			torch.save(model_state_dic, os.path.join(self.save_dir, 'best_model_{}.pth'.format(self.best_count)))
+			self.logger.info(f"save best mse {self.best_mse:.2f} mae {self.best_mae:.2f} model epoch {self.epoch}")
+			torch.save(model_state_dic, os.path.join(self.save_dir, f'best_model_{self.best_count}.pth'))
 			self.best_count += 1
