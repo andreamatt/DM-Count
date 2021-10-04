@@ -48,11 +48,12 @@ class Trainer(object):
 			raise Exception("gpu is not available")
 
 		downsample_ratio = 8
-		if args.dataset.lower() == 'qnrf':
-			self.datasets = {x: Crowd(args.dataset.lower(), os.path.join(args.data_dir, x), args.crop_size, downsample_ratio, x) for x in ['train', 'val']}
-		elif args.dataset.lower() == 'nwpu':
-			self.datasets = {x: Crowd(args.dataset.lower(), os.path.join(args.data_dir, x), args.crop_size, downsample_ratio, x) for x in ['train', 'val']}
-		elif args.dataset.lower() == 'sha' or args.dataset.lower() == 'shb':
+		if args.dataset.lower() in ('qnrf', 'nwpu', 'synth'):
+			self.datasets = {
+			    'train': Crowd(args.dataset.lower(), os.path.join(args.data_dir, 'train'), args.crop_size, downsample_ratio, 'train'),
+			    'val': Crowd(args.dataset.lower(), os.path.join(args.data_dir, 'val'), args.crop_size, downsample_ratio, 'val'),
+			}
+		elif args.dataset.lower() in ('sha', 'shb'):
 			self.datasets = {
 			    'train': Crowd(args.dataset.lower(), os.path.join(args.data_dir, 'train_data'), args.crop_size, downsample_ratio, 'train'),
 			    'val': Crowd(args.dataset.lower(), os.path.join(args.data_dir, 'test_data'), args.crop_size, downsample_ratio, 'val'),
@@ -94,11 +95,11 @@ class Trainer(object):
 		for epoch in range(self.start_epoch, args.max_epoch + 1):
 			self.logger.info(f'----- Epoch {epoch}/{args.max_epoch} -----')
 			self.epoch = epoch
-			self.train_eopch()
+			self.train_epoch()
 			if epoch % args.val_epoch == 0 and epoch >= args.val_start:
 				self.val_epoch()
 
-	def train_eopch(self):
+	def train_epoch(self):
 		epoch_ot_loss = AverageMeter()
 		epoch_ot_obj_value = AverageMeter()
 		epoch_wd = AverageMeter()
@@ -177,6 +178,6 @@ class Trainer(object):
 		if (2.0 * mse + mae) < (2.0 * self.best_mse + self.best_mae):
 			self.best_mse = mse
 			self.best_mae = mae
-			self.logger.info(f"save best mse {self.best_mse:.2f} mae {self.best_mae:.2f} model epoch {self.epoch}")
+			self.logger.info(f"NEW BEST: mse {self.best_mse:.2f} mae {self.best_mae:.2f} model epoch {self.epoch}")
 			torch.save(model_state_dic, os.path.join(self.save_dir, f'best_model_{self.best_count}.pth'))
 			self.best_count += 1

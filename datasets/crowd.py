@@ -59,7 +59,7 @@ class Crowd(data.Dataset):
 		if method not in ['train', 'val', 'test']:
 			raise Exception("Method not implemented")
 
-		if dataset == 'sha' or dataset == 'shb':
+		if dataset in ('sha', 'shb'):
 			self.im_list = sorted(glob(os.path.join(self.root_path, 'images', '*.jpg')))
 			self.kp_list = []
 			for im_path in self.im_list:
@@ -68,7 +68,7 @@ class Crowd(data.Dataset):
 				keypoints = sio.loadmat(gd_path)['image_info'][0][0][0][0][0]
 				self.kp_list.append(keypoints)
 
-		elif dataset == 'nwpu' or dataset == 'qnrf':
+		elif dataset in ('qnrf', 'nwpu', 'synth'):
 			self.im_list = sorted(glob(os.path.join(self.root_path, '*.jpg')))
 			self.kp_list = []
 			for im_path in self.im_list:

@@ -11,7 +11,7 @@ def str2bool(v):
 def parse_args():
 	parser = argparse.ArgumentParser(description='Train')
 	parser.add_argument('--data-dir', default='DATA/processed/SHA', help='data path')
-	parser.add_argument('--dataset', default='sha', help='dataset name: qnrf, nwpu, sha, shb')
+	parser.add_argument('--dataset', default='sha', help='dataset name: qnrf, nwpu, sha, shb, synth')
 	parser.add_argument('--lr', type=float, default=1e-5, help='the initial learning rate')
 	parser.add_argument('--weight-decay', type=float, default=1e-4, help='the weight decay')
 	parser.add_argument('--resume', default='', type=str, help='the path of resume training model')
@@ -38,6 +38,8 @@ def parse_args():
 	elif args.dataset.lower() == 'sha':
 		args.crop_size = 256
 	elif args.dataset.lower() == 'shb':
+		args.crop_size = 512
+	elif args.dataset.lower() == 'synth':
 		args.crop_size = 512
 	else:
 		raise NotImplementedError
