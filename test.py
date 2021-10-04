@@ -5,12 +5,19 @@ import numpy as np
 import datasets.crowd as crowd
 from models import vgg19
 
+
+def str2bool(v):
+	return str(v).lower() in ("yes", "true", "t", "1")
+
+
 parser = argparse.ArgumentParser(description='Test ')
 parser.add_argument('--device', default='0', help='assign device')
 parser.add_argument('--crop-size', type=int, default=512, help='the crop size of the train image')
 parser.add_argument('--model-path', type=str, default='pretrained_models/model_qnrf.pth', help='saved model path')
 parser.add_argument('--data-path', type=str, default='data/QNRF-Train-Val-Test', help='saved model path')
 parser.add_argument('--dataset', type=str, default='qnrf', help='dataset name: qnrf, nwpu, sha, shb')
+parser.add_argument('--mixed', type=str2bool, default=False, help='mix dataset with synth')
+parser.add_argument('--synth-path', default='DATA/processed/Synth', help='synth path for mixing')
 parser.add_argument('--pred-density-map-path', type=str, default='', help='save predicted density maps when pred-density-map-path is not empty.')
 
 args = parser.parse_args()

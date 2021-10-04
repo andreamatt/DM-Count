@@ -48,18 +48,12 @@ class Trainer(object):
 			raise Exception("gpu is not available")
 
 		downsample_ratio = 8
-		if args.dataset.lower() in ('qnrf', 'nwpu', 'synth'):
-			self.datasets = {
-			    'train': Crowd(args.dataset.lower(), os.path.join(args.data_dir, 'train'), args.crop_size, downsample_ratio, 'train'),
-			    'val': Crowd(args.dataset.lower(), os.path.join(args.data_dir, 'val'), args.crop_size, downsample_ratio, 'val'),
-			}
-		elif args.dataset.lower() in ('sha', 'shb'):
-			self.datasets = {
-			    'train': Crowd(args.dataset.lower(), os.path.join(args.data_dir, 'train_data'), args.crop_size, downsample_ratio, 'train'),
-			    'val': Crowd(args.dataset.lower(), os.path.join(args.data_dir, 'test_data'), args.crop_size, downsample_ratio, 'val'),
-			}
-		else:
-			raise NotImplementedError
+		train_subdir = 'train' if args.dataset.lower() in ('qnrf', 'nwpu', 'synth') else 'train_data'
+		test_subdir = 'val' if args.dataset.lower() in ('qnrf', 'nwpu', 'synth') else 'test_data'
+		self.datasets = {
+		    'train': Crowd(args.dataset.lower(), os.path.join(args.data_dir, train_subdir), args.crop_size, downsample_ratio, 'train', args.mixed, args.synth_path),
+		    'val': Crowd(args.dataset.lower(), os.path.join(args.data_dir, test_subdir), args.crop_size, downsample_ratio, 'val', args.mixed, args.synth_path),
+		}
 
 		self.dataloaders = {x: DataLoader(self.datasets[x], collate_fn=(train_collate if x == 'train' else default_collate), batch_size=(args.batch_size if x == 'train' else 1), shuffle=(True if x == 'train' else False), num_workers=args.num_workers * self.device_count, pin_memory=(True if x == 'train' else False)) for x in ['train', 'val']}
 		self.model = vgg19()

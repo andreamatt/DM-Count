@@ -5,13 +5,15 @@ from train_helper import Trainer
 
 
 def str2bool(v):
-	return v.lower() in ("yes", "true", "t", "1")
+	return str(v).lower() in ("yes", "true", "t", "1")
 
 
 def parse_args():
 	parser = argparse.ArgumentParser(description='Train')
 	parser.add_argument('--data-dir', default='DATA/processed/SHA', help='data path')
 	parser.add_argument('--dataset', default='sha', help='dataset name: qnrf, nwpu, sha, shb, synth')
+	parser.add_argument('--mixed', type=str2bool, default=False, help='mix dataset with synth')
+	parser.add_argument('--synth-path', default='DATA/processed/Synth', help='synth path for mixing')
 	parser.add_argument('--lr', type=float, default=1e-5, help='the initial learning rate')
 	parser.add_argument('--weight-decay', type=float, default=1e-4, help='the weight decay')
 	parser.add_argument('--resume', default='', type=str, help='the path of resume training model')
