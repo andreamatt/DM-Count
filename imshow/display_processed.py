@@ -16,8 +16,8 @@ def parse_args(args):
 def main(args):
 	source = parse_args(args).data
 
-	# Pick from all simulations, all cameras, all bmp
-	path = os.path.join(source, "*.npy")
+	# Pick from all phases
+	path = os.path.join(source, '*', "*.npy")
 	files = list(sorted(glob(path)))
 
 	i = 0
@@ -42,4 +42,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-	main(sys.argv)
+	main(sys.argv[1:])
