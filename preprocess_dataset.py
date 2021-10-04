@@ -14,5 +14,8 @@ if args.dataset.lower() == 'qnrf':
 elif args.dataset.lower() == 'nwpu':
 	from preprocess.preprocess_dataset_nwpu import main
 	main(args.input_dataset_path, args.output_dataset_path, 384, 1920)
+elif args.dataset.lower() == 'synth':
+	from preprocess.preprocess_dataset_synth import main
+	main(args.input_dataset_path, args.output_dataset_path)
 else:
 	raise NotImplementedError
