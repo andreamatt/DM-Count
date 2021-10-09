@@ -48,8 +48,8 @@ class Trainer(object):
 			raise Exception("gpu is not available")
 
 		downsample_ratio = 8
-		train_subdir = 'train' if args.dataset.lower() in ('qnrf', 'nwpu', 'synth') else 'train_data'
-		test_subdir = 'val' if args.dataset.lower() in ('qnrf', 'nwpu', 'synth') else 'test_data'
+		train_subdir = 'train' if args.dataset.lower() in ('qnrf', 'nwpu', 'synth', 'gcc') else 'train_data'
+		test_subdir = 'val' if args.dataset.lower() in ('qnrf', 'nwpu', 'synth', 'gcc') else 'test_data'
 		self.datasets = {
 		    'train': Crowd(args.dataset.lower(), os.path.join(args.data_dir, train_subdir), args.crop_size, downsample_ratio, 'train', args.mixed, args.synth_path),
 		    'val': Crowd(args.dataset.lower(), os.path.join(args.data_dir, test_subdir), args.crop_size, downsample_ratio, 'val', args.mixed, args.synth_path),

@@ -68,7 +68,7 @@ class Crowd(data.Dataset):
 				keypoints = sio.loadmat(gd_path)['image_info'][0][0][0][0][0]
 				self.kp_list.append(keypoints)
 
-		elif dataset in ('qnrf', 'nwpu', 'synth'):
+		elif dataset in ('qnrf', 'nwpu', 'synth', 'gcc'):
 			self.im_list = sorted(glob(os.path.join(self.root_path, '*.jpg')))
 			self.kp_list = []
 			for im_path in self.im_list:

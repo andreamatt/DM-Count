@@ -11,7 +11,7 @@ def str2bool(v):
 def parse_args():
 	parser = argparse.ArgumentParser(description='Train')
 	parser.add_argument('--data-dir', default='DATA/processed/SHA', help='data path')
-	parser.add_argument('--dataset', default='sha', help='dataset name: qnrf, nwpu, sha, shb, synth')
+	parser.add_argument('--dataset', default='sha', help='dataset name: qnrf, nwpu, sha, shb, synth, gcc')
 	parser.add_argument('--mixed', type=str2bool, default=False, help='mix dataset with synth')
 	parser.add_argument('--synth-path', default='DATA/processed/Synth', help='synth path for mixing')
 	parser.add_argument('--lr', type=float, default=1e-5, help='the initial learning rate')
@@ -42,6 +42,8 @@ def parse_args():
 	elif args.dataset.lower() == 'shb':
 		args.crop_size = 512
 	elif args.dataset.lower() == 'synth':
+		args.crop_size = 512
+	elif args.dataset.lower() == 'gcc':
 		args.crop_size = 512
 	else:
 		raise NotImplementedError
