@@ -10,7 +10,7 @@ def str2bool(v):
 	return str(v).lower() in ("yes", "true", "t", "1")
 
 
-parser = argparse.ArgumentParser(description='Test ')
+parser = argparse.ArgumentParser(description='Test')
 parser.add_argument('--device', default='0', help='assign device')
 parser.add_argument('--crop-size', type=int, default=512, help='the crop size of the train image')
 parser.add_argument('--model-path', type=str, default='pretrained_models/model_qnrf.pth', help='saved model path')

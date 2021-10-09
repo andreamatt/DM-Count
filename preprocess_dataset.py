@@ -17,5 +17,8 @@ elif args.dataset.lower() == 'nwpu':
 elif args.dataset.lower() == 'synth':
 	from preprocess.preprocess_dataset_synth import main
 	main(args.input_path, args.output_path)
+elif args.dataset.lower() == 'gcc':
+	from preprocess.preprocess_dataset_gcc import main
+	main(args.input_path, args.output_path)
 else:
 	raise NotImplementedError

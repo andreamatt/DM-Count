@@ -5,25 +5,29 @@ import numpy as np
 import csv
 import random
 import shutil
+from joblib import Parallel, delayed
+
+
+def hex_to_rgb(hex):
+	return list(int(hex[i:i + 2], 16) for i in (0, 2, 4))
+
+
+train_percent = 0.8
+train_val_percent = 0.2
+blur_chance = 0.2
+blur_kernels = (3, 5, 7)
+blur_kernels_weights = (0.6, 0.3, 0.1)
+noise_chance = 0.2
+noises = ('gauss', 's&p', 'poisson', 'speckle')
+noises_weights = (0.3, 0.3, 0.3, 0.1)
 
 
 def main(input_dataset_path, output_dataset_path):
 	input = input_dataset_path
 	output = output_dataset_path
-	train_percent = 0.8
-	train_val_percent = 0.2
-	blur_chance = 0.2
-	blur_kernels = (3, 5, 7)
-	blur_kernels_weights = (0.6, 0.3, 0.1)
-	noise_chance = 0.2
-	noises = ('gauss', 's&p', 'poisson', 'speckle')
-	noises_weights = (0.3, 0.3, 0.3, 0.1)
 
 	# Pick from all simulations, all cameras, all txt
 	files = list(sorted(glob(os.path.join(input, "Simulation*", "*", "*.txt"))))
-
-	def hex_to_rgb(hex):
-		return list(int(hex[i:i + 2], 16) for i in (0, 2, 4))
 
 	if os.path.exists(output):
 		shutil.rmtree(output)
@@ -38,17 +42,22 @@ def main(input_dataset_path, output_dataset_path):
 		os.mkdir(os.path.join(output, 'test'))
 
 	print(f"{len(files)} images found")
-	for i in range(len(files)):
-		file = files[i]
-		standard = cv2.imread(file.replace(".txt", ".bmp"))
+	Parallel(n_jobs=16, verbose=10)(delayed(Process)(files[i], i, output) for i in range(len(files)))
+
+
+def Process(txt_path, i, output):
+	standard_path = txt_path.replace(".txt", ".bmp")
+	segmentation_path = txt_path.replace(".txt", "_mask.bmp")
+	if os.path.exists(standard_path) and os.path.exists(segmentation_path):
+		standard = cv2.imread(standard_path)
+		segmentation = cv2.imread(segmentation_path)
 		if random.random() < noise_chance:
 			standard = noisy(random.choices(noises, noises_weights)[0], standard)
 		if random.random() < blur_chance:
 			blur_size = random.choices(blur_kernels, blur_kernels_weights)[0]
 			standard = cv2.blur(standard, (blur_size, blur_size))
-		segmentation = cv2.imread(file.replace(".txt", "_mask.bmp"))
 		points = []
-		with open(file) as csvfile:
+		with open(txt_path) as csvfile:
 			reader = csv.reader(csvfile, delimiter=";")
 			for x, y, c in reader:
 				r, g, b = hex_to_rgb(c)
@@ -63,12 +72,8 @@ def main(input_dataset_path, output_dataset_path):
 		else:
 			phase = 'test'
 
-		cv2.imwrite(os.path.join(output, phase, f"img_{i}.jpg"), standard, [int(cv2.IMWRITE_JPEG_QUALITY), random.randint(60, 100)])
+		cv2.imwrite(os.path.join(output, phase, f"img_{i}.jpg"), standard, [int(cv2.IMWRITE_JPEG_QUALITY), random.randint(85, 95)])
 		np.save(os.path.join(output, phase, f"img_{i}.npy"), np.array(points))
-
-		print(f"Copied {int(i*100.0/len(files))}%")
-
-	print("Finished")
 
 
 def noisy(noise_typ, image):
