@@ -22,7 +22,7 @@ noises = ('gauss', 's&p', 'poisson', 'speckle')
 noises_weights = (0.3, 0.3, 0.3, 0.1)
 
 
-def main(input_dataset_path, output_dataset_path):
+def main(input_dataset_path, output_dataset_path, augmentation):
 	input = input_dataset_path
 	output = output_dataset_path
 
@@ -42,20 +42,14 @@ def main(input_dataset_path, output_dataset_path):
 		os.mkdir(os.path.join(output, 'test'))
 
 	print(f"{len(files)} images found")
-	Parallel(n_jobs=16, verbose=10)(delayed(Process)(files[i], i, output) for i in range(len(files)))
+	Parallel(n_jobs=16, verbose=10)(delayed(Process)(files[i], i, output, augmentation) for i in range(len(files)))
 
 
-def Process(txt_path, i, output):
+def Process(txt_path, i, output, augmentation):
 	standard_path = txt_path.replace(".txt", ".bmp")
 	segmentation_path = txt_path.replace(".txt", "_mask.bmp")
 	if os.path.exists(standard_path) and os.path.exists(segmentation_path):
-		standard = cv2.imread(standard_path)
 		segmentation = cv2.imread(segmentation_path)
-		if random.random() < noise_chance:
-			standard = noisy(random.choices(noises, noises_weights)[0], standard)
-		if random.random() < blur_chance:
-			blur_size = random.choices(blur_kernels, blur_kernels_weights)[0]
-			standard = cv2.blur(standard, (blur_size, blur_size))
 		points = []
 		with open(txt_path) as csvfile:
 			reader = csv.reader(csvfile, delimiter=";")
@@ -63,6 +57,8 @@ def Process(txt_path, i, output):
 				r, g, b = hex_to_rgb(c)
 				if (segmentation[round(float(y)) - 1][round(float(x)) - 1] == [b, g, r]).all():
 					points.append((float(x), float(y)))
+
+		standard = cv2.imread(standard_path)
 
 		if random.random() < train_percent:
 			if random.random() < train_val_percent:
@@ -74,6 +70,17 @@ def Process(txt_path, i, output):
 
 		cv2.imwrite(os.path.join(output, phase, f"img_{i}.jpg"), standard, [int(cv2.IMWRITE_JPEG_QUALITY), random.randint(85, 95)])
 		np.save(os.path.join(output, phase, f"img_{i}.npy"), np.array(points))
+
+		if augmentation:
+			phase = 'train'
+			noisy_standard = noisy(random.choices(noises, noises_weights)[0], standard)
+			cv2.imwrite(os.path.join(output, phase, f"img_{i}_noise.jpg"), noisy_standard, [int(cv2.IMWRITE_JPEG_QUALITY), random.randint(85, 95)])
+			np.save(os.path.join(output, phase, f"img_{i}_noise.npy"), np.array(points))
+
+			blur_size = random.choices(blur_kernels, blur_kernels_weights)[0]
+			blurred_standard = cv2.blur(standard, (blur_size, blur_size))
+			cv2.imwrite(os.path.join(output, phase, f"img_{i}_blur.jpg"), blurred_standard, [int(cv2.IMWRITE_JPEG_QUALITY), random.randint(85, 95)])
+			np.save(os.path.join(output, phase, f"img_{i}_blur.npy"), np.array(points))
 
 
 def noisy(noise_typ, image):
