@@ -31,7 +31,7 @@ class Trainer(object):
 		args = self.args
 		sub_dir = f'input-{args.crop_size}_wot-{args.wot}_wtv-{args.wtv}_reg-{args.reg}_nIter-{args.num_of_iter_in_ot}_normCood-{args.norm_cood}'
 
-		self.save_dir = os.path.join('ckpts', args.dataset.lower(), sub_dir)
+		self.save_dir = os.path.join(args.save_dir, sub_dir)
 		if not os.path.exists(self.save_dir):
 			os.makedirs(self.save_dir)
 

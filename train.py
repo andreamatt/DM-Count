@@ -11,6 +11,7 @@ def str2bool(v):
 def parse_args():
 	parser = argparse.ArgumentParser(description='Train')
 	parser.add_argument('--data-dir', default='DATA/processed/SHA', help='data path')
+	parser.add_argument('--save-dir', default='ckpts/SHA', help='checkpoint save directory')
 	parser.add_argument('--dataset', default='sha', help='dataset name: qnrf, nwpu, sha, shb, synth, gcc')
 	parser.add_argument('--mixed', type=str2bool, default=False, help='mix dataset with synth')
 	parser.add_argument('--synth-path', default='DATA/processed/Synth', help='synth path for mixing')
