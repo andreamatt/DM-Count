@@ -36,8 +36,7 @@ def parse_args():
 	if args.dataset.lower() == 'qnrf':
 		args.crop_size = 512
 	elif args.dataset.lower() == 'nwpu':
-		args.crop_size = 384
-		args.val_epoch = 50
+		args.crop_size = 512
 	elif args.dataset.lower() == 'sha':
 		args.crop_size = 256
 	elif args.dataset.lower() == 'shb':
