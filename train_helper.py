@@ -103,6 +103,7 @@ class Trainer(object):
 		epoch_mae = AverageMeter()
 		epoch_mse = AverageMeter()
 		epoch_start = time.time()
+		epoch_loss_cost = 0
 		self.model.train()  # Set model to training mode
 
 		for step, (inputs, points, gt_discrete) in enumerate(self.dataloaders['train']):
@@ -114,6 +115,8 @@ class Trainer(object):
 
 			with torch.set_grad_enabled(True):
 				outputs, outputs_normed = self.model(inputs)
+
+				pre_loss = time.time()
 				# Compute OT loss.
 				ot_loss, wd, ot_obj_value = self.ot_loss(outputs_normed, outputs, points)
 				ot_loss = ot_loss * self.args.wot
@@ -144,7 +147,9 @@ class Trainer(object):
 				epoch_mse.update(np.mean(pred_err * pred_err), N)
 				epoch_mae.update(np.mean(abs(pred_err)), N)
 
-		self.logger.info(f'Epoch {self.epoch} Train, Loss: {epoch_loss.get_avg():.2f}, OT Loss: {epoch_ot_loss.get_avg():.2e}, Wass Distance: {epoch_wd.get_avg():.2f}, OT obj value: {epoch_ot_obj_value.get_avg():.2f}, Count Loss: {epoch_count_loss.get_avg():.2f}, TV Loss: {epoch_tv_loss.get_avg():.2f}, MSE: {np.sqrt(epoch_mse.get_avg()):.2f} MAE: {epoch_mae.get_avg():.2f}, Cost {time.time() - epoch_start:.1f} sec')
+				epoch_loss_cost += time.time() - pre_loss
+
+		self.logger.info(f'Epoch {self.epoch} Train, Loss: {epoch_loss.get_avg():.2f}, OT Loss: {epoch_ot_loss.get_avg():.2e}, Wass Distance: {epoch_wd.get_avg():.2f}, OT obj value: {epoch_ot_obj_value.get_avg():.2f}, Count Loss: {epoch_count_loss.get_avg():.2f}, TV Loss: {epoch_tv_loss.get_avg():.2f}, MSE: {np.sqrt(epoch_mse.get_avg()):.2f} MAE: {epoch_mae.get_avg():.2f}, Cost {time.time() - epoch_start:.1f} ({epoch_loss_cost:.1f}) sec')
 		model_state_dic = self.model.state_dict()
 		save_path = os.path.join(self.save_dir, f'{self.epoch}_ckpt.tar')
 		torch.save({'epoch': self.epoch, 'optimizer_state_dict': self.optimizer.state_dict(), 'model_state_dict': model_state_dic}, save_path)
