@@ -135,6 +135,8 @@ class Trainer(object):
 				tv_loss = (self.tv_loss(outputs_normed, gt_discrete_normed).sum(1).sum(1).sum(1) * torch.from_numpy(gd_count).float().to(self.device)).mean(0) * self.args.wtv
 				epoch_tv_loss.update(tv_loss.item(), N)
 
+				epoch_loss_cost += time.time() - pre_loss
+
 				loss = ot_loss + count_loss + tv_loss
 
 				self.optimizer.zero_grad()
@@ -146,8 +148,6 @@ class Trainer(object):
 				epoch_loss.update(loss.item(), N)
 				epoch_mse.update(np.mean(pred_err * pred_err), N)
 				epoch_mae.update(np.mean(abs(pred_err)), N)
-
-				epoch_loss_cost += time.time() - pre_loss
 
 		self.logger.info(f'Epoch {self.epoch} Train, Loss: {epoch_loss.get_avg():.2f}, OT Loss: {epoch_ot_loss.get_avg():.2e}, Wass Distance: {epoch_wd.get_avg():.2f}, OT obj value: {epoch_ot_obj_value.get_avg():.2f}, Count Loss: {epoch_count_loss.get_avg():.2f}, TV Loss: {epoch_tv_loss.get_avg():.2f}, MSE: {np.sqrt(epoch_mse.get_avg()):.2f} MAE: {epoch_mae.get_avg():.2f}, Cost {time.time() - epoch_start:.1f} ({epoch_loss_cost:.1f}) sec')
 		model_state_dic = self.model.state_dict()
