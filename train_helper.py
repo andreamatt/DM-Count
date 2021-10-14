@@ -124,6 +124,7 @@ class Trainer(object):
 				epoch_ot_loss.update(ot_loss.item(), N)
 				epoch_ot_obj_value.update(ot_obj_value.item(), N)
 				epoch_wd.update(wd, N)
+				epoch_loss_cost += time.time() - pre_loss
 
 				# Compute counting loss.
 				count_loss = self.mae(outputs.sum(1).sum(1).sum(1), torch.from_numpy(gd_count).float().to(self.device))
@@ -134,8 +135,6 @@ class Trainer(object):
 				gt_discrete_normed = gt_discrete / (gd_count_tensor + 1e-6)
 				tv_loss = (self.tv_loss(outputs_normed, gt_discrete_normed).sum(1).sum(1).sum(1) * torch.from_numpy(gd_count).float().to(self.device)).mean(0) * self.args.wtv
 				epoch_tv_loss.update(tv_loss.item(), N)
-
-				epoch_loss_cost += time.time() - pre_loss
 
 				loss = ot_loss + count_loss + tv_loss
 
