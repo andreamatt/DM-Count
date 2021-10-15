@@ -157,12 +157,12 @@ class Trainer(object):
 	def val_epoch(self):
 		args = self.args
 		epoch_start = time.time()
-		self.model.eval()  # Set model to evaluate mode
 		epoch_res = []
-		for inputs, count, name in self.dataloaders['val']:
-			inputs = inputs.to(self.device)
-			assert inputs.size(0) == 1, 'the batch size should equal to 1 in validation mode'
-			with torch.set_grad_enabled(False):
+		self.model.eval()  # Set model to evaluate mode
+		with torch.no_grad():
+			for inputs, count, name in self.dataloaders['val']:
+				inputs = inputs.to(self.device)
+				assert inputs.size(0) == 1, 'the batch size should equal to 1 in validation mode'
 				outputs, _ = self.model(inputs)
 				res = count[0].item() - torch.sum(outputs).item()
 				epoch_res.append(res)
