@@ -31,6 +31,9 @@ def main(input_dataset_path, output_dataset_path, augmentation, min_size, max_si
 
 	print(f"{len(files)} images found")
 	Parallel(n_jobs=threads, verbose=10)(delayed(Process)(files[i], i, output, augmentation, min_size, max_size) for i in range(len(files)))
+	# for i in range(len(files)):
+	# 	print(files[i])
+	# 	Process(files[i], i, output, augmentation, min_size, max_size)
 
 
 def generate_data(im_path, min_size, max_size):
@@ -39,15 +42,17 @@ def generate_data(im_path, min_size, max_size):
 	txt_path = im_path.replace(".bmp", ".txt")
 	segmentation_path = txt_path.replace(".txt", "_mask.bmp")
 	points = []
-	segmentation = cv2.imread(segmentation_path)
+	segmentation = Image.open(segmentation_path).convert('RGB')
 	with open(txt_path) as csvfile:
 		reader = csv.reader(csvfile, delimiter=";")
 		for x, y, c in reader:
 			r, g, b = hex_to_rgb(c)
-			if (segmentation[round(float(y)) - 1][round(float(x)) - 1] == [b, g, r]).all():
-				points.append((float(x), float(y)))
-			points.append((float(x), float(y)))
-	points = np.array(points)
+			if segmentation.getpixel((float(x), float(y))) == (r, g, b):
+				points.append([float(x), float(y)])
+	if len(points)==0:
+		points = np.empty((0, 2))
+	else:
+		points = np.array(points)
 
 	im_h, im_w, rr = cal_new_size(im_h, im_w, min_size, max_size)
 	if rr != 1.0:

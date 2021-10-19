@@ -23,11 +23,11 @@ def main(args):
 	i = 0
 	while i < len(files):
 		annot_file = files[i]
+		print(annot_file)
 		annot = np.load(annot_file)
 		image = cv2.imread(annot_file.replace("npy", "jpg"))
 		x = np.rint(annot[:, 0]).astype(int)
 		y = np.rint(annot[:, 1]).astype(int)
-
 		for p in range(len(x)):
 			image = cv2.circle(image, (x[p], y[p]), radius=1, color=(0, 0, 255, 0), thickness=1)
 

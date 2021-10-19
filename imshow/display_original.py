@@ -25,18 +25,17 @@ def main(args):
 
 	i = 0
 	while i < len(files):
-		test_file = files[i]
 		annot_file = files[i]
+		print(annot_file)
 		annot = pd.read_csv(annot_file, names=["x", "y", "c"], sep=";")
-		image = cv2.imread(test_file.replace("txt", "bmp"))
-
+		image = cv2.imread(annot_file.replace("txt", "bmp"))
 		x = np.rint(annot["x"]).astype(int)
 		y = np.rint(annot["y"]).astype(int)
 
 		for p in range(len(x)):
-			image = cv2.circle(image, (x[p], y[p]), radius=1, color=(0, 0, 255, 0), thickness=1)
-			r, g, b = hex_to_rgb(annot.iloc[p, 2])
-			image = cv2.circle(image, (x[p], y[p]), radius=3, color=(r, g, b), thickness=2)
+			c = annot.iloc[p, 2]
+			r, g, b = hex_to_rgb(c)
+			image = cv2.circle(image, (x[p], y[p]), radius=3, color=(b, g, r), thickness=2)
 
 		cv2.imshow("image", image)
 		k = cv2.waitKey(0)
