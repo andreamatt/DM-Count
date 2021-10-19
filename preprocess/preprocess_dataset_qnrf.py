@@ -3,54 +3,25 @@ from PIL import Image
 import numpy as np
 import os
 from glob import glob
-import cv2
-
-dir_name = os.path.dirname(os.path.abspath(__file__))
-
-
-def cal_new_size(im_h, im_w, min_size, max_size):
-	# horizontal or vertical
-	if im_h < im_w: # horizontal => im_h represents size
-		if im_h < min_size: # if too small, upscale
-			ratio = 1.0 * min_size / im_h
-			im_h = min_size
-			im_w = round(im_w * ratio)
-		elif im_h > max_size: # if too big, downscale
-			ratio = 1.0 * max_size / im_h
-			im_h = max_size
-			im_w = round(im_w * ratio)
-		else:
-			ratio = 1.0
-	else:
-		if im_w < min_size:
-			ratio = 1.0 * min_size / im_w
-			im_w = min_size
-			im_h = round(im_h * ratio)
-		elif im_w > max_size:
-			ratio = 1.0 * max_size / im_w
-			im_w = max_size
-			im_h = round(im_h * ratio)
-		else:
-			ratio = 1.0
-	return im_h, im_w, ratio
+from preprocess.util import cal_new_size
 
 
 def generate_data(im_path, min_size, max_size):
-	im = Image.open(im_path)
+	im = Image.open(im_path).convert('RGB')
 	im_w, im_h = im.size
 	mat_path = im_path.replace('.jpg', '_ann.mat')
 	points = loadmat(mat_path)['annPoints'].astype(np.float32)
-	idx_mask = (points[:, 0] >= 0) * (points[:, 0] <= im_w) * (points[:, 1] >= 0) * (points[:, 1] <= im_h)
-	points = points[idx_mask]
+	if len(points) > 0:  # some image has no crowd
+		idx_mask = (points[:, 0] >= 0) * (points[:, 0] <= im_w) * (points[:, 1] >= 0) * (points[:, 1] <= im_h)
+		points = points[idx_mask]
 	im_h, im_w, rr = cal_new_size(im_h, im_w, min_size, max_size)
-	im = np.array(im)
 	if rr != 1.0:
-		im = cv2.resize(np.array(im), (im_w, im_h), cv2.INTER_CUBIC) # rescale the image
+		im = im.resize((im_w, im_h), Image.BICUBIC)
 		points = points * rr
-	return Image.fromarray(im), points
+	return im, points
 
 
-def main(input_dataset_path, output_dataset_path, min_size=512, max_size=2048):
+def main(input_dataset_path, output_dataset_path, min_size, max_size):
 	for phase in ['Train', 'Test']:
 		sub_dir = os.path.join(input_dataset_path, phase)
 		if phase == 'Train':

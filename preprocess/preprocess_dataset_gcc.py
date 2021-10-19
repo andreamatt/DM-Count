@@ -1,28 +1,20 @@
 from glob import glob
 import os
-import cv2
+from PIL import Image
 import numpy as np
-import csv
-import random
 import shutil
 from joblib import Parallel, delayed
 from scipy.io import loadmat
 
-
-def hex_to_rgb(hex):
-	return list(int(hex[i:i + 2], 16) for i in (0, 2, 4))
+from preprocess.util import cal_new_size, random_phase, random_quality
 
 
-train_percent = 0.8
-train_val_percent = 0.2
-
-
-def main(input_dataset_path, output_dataset_path):
+def main(input_dataset_path, output_dataset_path, min_size, max_size, threads):
 	input = input_dataset_path
 	output = output_dataset_path
 
-	# Pick from all scenes, all mat
-	files = list(sorted(glob(os.path.join(input, "scenes*", "scene*", "mats", "*.mat"))))
+	# Pick from all scenes, all pngs
+	files = list(sorted(glob(os.path.join(input, "scenes*", "scene*", "pngs", "*.png"))))
 
 	if os.path.exists(output):
 		shutil.rmtree(output)
@@ -37,21 +29,29 @@ def main(input_dataset_path, output_dataset_path):
 		os.mkdir(os.path.join(output, 'test'))
 
 	print(f"{len(files)} images found")
-	Parallel(n_jobs=16, verbose=10)(delayed(Process)(files[i], i, output) for i in range(len(files)))
+	Parallel(n_jobs=threads, verbose=10)(delayed(Process)(files[i], i, output, min_size, max_size) for i in range(len(files)))
 
 
-def Process(mat_path, i, output):
-	img_path = mat_path.replace("mats", "pngs").replace(".mat", ".png")
-	standard = cv2.imread(img_path)
+def generate_data(im_path, min_size, max_size):
+	im = Image.open(im_path).convert('RGB')
+	im_w, im_h = im.size
+	mat_path = im_path.replace("pngs", "mats").replace(".png", ".mat")
 	points = loadmat(mat_path)['image_info'][0][0][0].astype(np.float32)
+	if len(points) > 0:  # some image has no crowd
+		idx_mask = (points[:, 0] >= 0) * (points[:, 0] <= im_w) * (points[:, 1] >= 0) * (points[:, 1] <= im_h)
+		points = points[idx_mask]
+	im_h, im_w, rr = cal_new_size(im_h, im_w, min_size, max_size)
+	im = np.array(im)
+	if rr != 1.0:
+		im = im.resize((im_w, im_h), Image.BICUBIC)
+		points = points * rr
+	return Image.fromarray(im), points
 
-	if random.random() < train_percent:
-		if random.random() < train_val_percent:
-			phase = 'val'
-		else:
-			phase = 'train'
-	else:
-		phase = 'test'
 
-	cv2.imwrite(os.path.join(output, phase, f"img_{i}.jpg"), standard, [int(cv2.IMWRITE_JPEG_QUALITY), random.randint(85, 95)])
+def Process(img_path, i, output, min_size, max_size):
+	im, points = generate_data(img_path, min_size, max_size)
+
+	phase = random_phase()
+
+	im.save(os.path.join(output, phase, f"img_{i}.jpg"), quality=random_quality())
 	np.save(os.path.join(output, phase, f"img_{i}.npy"), np.array(points))

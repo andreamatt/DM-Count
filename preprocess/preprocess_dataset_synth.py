@@ -1,28 +1,16 @@
 from glob import glob
 import os
-import cv2
+from PIL import Image, ImageFilter
 import numpy as np
 import csv
 import random
 import shutil
 from joblib import Parallel, delayed
+import cv2
+from preprocess.util import cal_new_size, hex_to_rgb, noisy, random_blur, random_phase, random_quality
 
 
-def hex_to_rgb(hex):
-	return list(int(hex[i:i + 2], 16) for i in (0, 2, 4))
-
-
-train_percent = 0.8
-train_val_percent = 0.2
-blur_chance = 0.2
-blur_kernels = (3, 5, 7)
-blur_kernels_weights = (0.6, 0.3, 0.1)
-noise_chance = 0.2
-noises = ('gauss', 's&p', 'poisson', 'speckle')
-noises_weights = (0.3, 0.3, 0.3, 0.1)
-
-
-def main(input_dataset_path, output_dataset_path, augmentation):
+def main(input_dataset_path, output_dataset_path, augmentation, min_size, max_size, threads):
 	input = input_dataset_path
 	output = output_dataset_path
 
@@ -42,82 +30,50 @@ def main(input_dataset_path, output_dataset_path, augmentation):
 		os.mkdir(os.path.join(output, 'test'))
 
 	print(f"{len(files)} images found")
-	Parallel(n_jobs=16, verbose=10)(delayed(Process)(files[i], i, output, augmentation) for i in range(len(files)))
+	Parallel(n_jobs=threads, verbose=10)(delayed(Process)(files[i], i, output, augmentation, min_size, max_size) for i in range(len(files)))
 
 
-def Process(txt_path, i, output, augmentation):
+def generate_data(im_path, min_size, max_size):
+	im = Image.open(im_path).convert('RGB')
+	im_w, im_h = im.size
+	txt_path = im_path.replace(".bmp", ".txt")
+	segmentation_path = txt_path.replace(".txt", "_mask.bmp")
+	points = []
+	segmentation = cv2.imread(segmentation_path)
+	with open(txt_path) as csvfile:
+		reader = csv.reader(csvfile, delimiter=";")
+		for x, y, c in reader:
+			r, g, b = hex_to_rgb(c)
+			if (segmentation[round(float(y)) - 1][round(float(x)) - 1] == [b, g, r]).all():
+				points.append((float(x), float(y)))
+			points.append((float(x), float(y)))
+	points = np.array(points)
+
+	im_h, im_w, rr = cal_new_size(im_h, im_w, min_size, max_size)
+	if rr != 1.0:
+		im = im.resize((im_w, im_h), Image.BICUBIC)
+		points = points * rr
+	return im, points
+
+
+def Process(txt_path, i, output, augmentation, min_size, max_size):
 	standard_path = txt_path.replace(".txt", ".bmp")
 	segmentation_path = txt_path.replace(".txt", "_mask.bmp")
 	if os.path.exists(standard_path) and os.path.exists(segmentation_path):
-		segmentation = cv2.imread(segmentation_path)
-		points = []
-		with open(txt_path) as csvfile:
-			reader = csv.reader(csvfile, delimiter=";")
-			for x, y, c in reader:
-				r, g, b = hex_to_rgb(c)
-				if (segmentation[round(float(y)) - 1][round(float(x)) - 1] == [b, g, r]).all():
-					points.append((float(x), float(y)))
+		im, points = generate_data(standard_path, min_size, max_size)
 
-		standard = cv2.imread(standard_path)
+		phase = random_phase()
 
-		if random.random() < train_percent:
-			if random.random() < train_val_percent:
-				phase = 'val'
-			else:
-				phase = 'train'
-		else:
-			phase = 'test'
-
-		cv2.imwrite(os.path.join(output, phase, f"img_{i}.jpg"), standard, [int(cv2.IMWRITE_JPEG_QUALITY), random.randint(85, 95)])
-		np.save(os.path.join(output, phase, f"img_{i}.npy"), np.array(points))
+		im.save(os.path.join(output, phase, f"img_{i}.jpg"), quality=random_quality())
+		np.save(os.path.join(output, phase, f"img_{i}.npy"), points)
 
 		if augmentation:
 			phase = 'train'
-			noisy_standard = noisy(random.choices(noises, noises_weights)[0], standard)
-			cv2.imwrite(os.path.join(output, phase, f"img_{i}_noise.jpg"), noisy_standard, [int(cv2.IMWRITE_JPEG_QUALITY), random.randint(85, 95)])
-			np.save(os.path.join(output, phase, f"img_{i}_noise.npy"), np.array(points))
+			noisy_standard = noisy(im)
+			noisy_standard.save(os.path.join(output, phase, f"img_{i}_noise.jpg"), quality=random_quality())
+			np.save(os.path.join(output, phase, f"img_{i}_noise.npy"), points)
 
-			blur_size = random.choices(blur_kernels, blur_kernels_weights)[0]
-			blurred_standard = cv2.blur(standard, (blur_size, blur_size))
-			cv2.imwrite(os.path.join(output, phase, f"img_{i}_blur.jpg"), blurred_standard, [int(cv2.IMWRITE_JPEG_QUALITY), random.randint(85, 95)])
-			np.save(os.path.join(output, phase, f"img_{i}_blur.npy"), np.array(points))
-
-
-def noisy(noise_typ, image):
-	if noise_typ == "gauss":
-		row, col, ch = image.shape
-		mean = 0
-		var = 0.1
-		sigma = var**0.5
-		gauss = np.random.normal(mean, sigma, (row, col, ch))
-		gauss = gauss.reshape(row, col, ch)
-		noisy = image + gauss
-		return noisy
-
-	elif noise_typ == "s&p":
-		row, col, ch = image.shape
-		s_vs_p = 0.5
-		amount = 0.004
-		out = np.copy(image)
-		# Salt mode
-		num_salt = np.ceil(amount * image.size * s_vs_p)
-		coords = tuple([np.random.randint(0, i - 1, int(num_salt)) for i in image.shape])
-		out[coords] = 1
-		# Pepper mode
-		num_pepper = np.ceil(amount * image.size * (1. - s_vs_p))
-		coords = tuple([np.random.randint(0, i - 1, int(num_pepper)) for i in image.shape])
-		out[coords] = 0
-		return out
-
-	elif noise_typ == "poisson":
-		vals = len(np.unique(image))
-		vals = 2**np.ceil(np.log2(vals))
-		noisy = np.random.poisson(image * vals) / float(vals)
-		return noisy
-
-	elif noise_typ == "speckle":
-		row, col, ch = image.shape
-		gauss = np.random.randn(row, col, ch)
-		gauss = gauss.reshape(row, col, ch)
-		noisy = image + image * gauss
-		return noisy
+			blur_size = random_blur()
+			blurred_standard = Image.fromarray(cv2.blur(np.array(im), (blur_size, blur_size)))
+			blurred_standard.save(os.path.join(output, phase, f"img_{i}_blur.jpg"), quality=random_quality())
+			np.save(os.path.join(output, phase, f"img_{i}_blur.npy"), points)
