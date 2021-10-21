@@ -9,8 +9,9 @@ import numpy as np
 from datetime import datetime
 
 from datasets.crowd import Crowd
-from models import vgg19
 from losses.ot_loss import OT_Loss
+from models import vgg19
+from losses.mt_loss import MT_Loss
 from utils.pytorch_utils import Save_Handle, AverageMeter
 import utils.log_utils as log_utils
 
@@ -74,7 +75,7 @@ class Trainer(object):
 		else:
 			self.logger.info('random initialization')
 
-		self.ot_loss = OT_Loss(args.crop_size, downsample_ratio, args.norm_cood, self.device, args.num_of_iter_in_ot, args.reg)
+		self.ot_loss = MT_Loss(args.crop_size, downsample_ratio, args.norm_cood, self.device, args.num_of_iter_in_ot, args.reg)
 		self.tv_loss = nn.L1Loss(reduction='none').to(self.device)
 		self.mse = nn.MSELoss().to(self.device)
 		self.mae = nn.L1Loss().to(self.device)
@@ -116,15 +117,14 @@ class Trainer(object):
 			with torch.set_grad_enabled(True):
 				outputs, outputs_normed = self.model(inputs)
 
-				pre_loss = time.time()
 				# Compute OT loss.
-				ot_loss, wd, ot_obj_value = self.ot_loss(outputs_normed, outputs, points)
+				ot_loss, wd, ot_obj_value, cost = self.ot_loss(outputs_normed, outputs, points)
+				epoch_loss_cost += cost
 				ot_loss = ot_loss * self.args.wot
 				ot_obj_value = ot_obj_value * self.args.wot
 				epoch_ot_loss.update(ot_loss.item(), N)
 				epoch_ot_obj_value.update(ot_obj_value.item(), N)
 				epoch_wd.update(wd, N)
-				epoch_loss_cost += time.time() - pre_loss
 
 				# Compute counting loss.
 				count_loss = self.mae(outputs.sum(1).sum(1).sum(1), torch.from_numpy(gd_count).float().to(self.device))
