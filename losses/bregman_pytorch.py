@@ -71,7 +71,17 @@ def sinkhorn(a, b, C, reg=1e-1, method='sinkhorn', maxIter=1000, tau=1e3, stopTh
 		raise ValueError("Unknown method '%s'." % method)
 
 
-def sinkhorn_knopp(a, b, C, reg=1e-1, maxIter=1000, stopThr=1e-9, verbose=False, log=False, warm_start=None, eval_freq=10, **kwargs):
+def sinkhorn_knopp(a, b, C, reg=1e-1, maxIter=1000, stopThr=1e-9, verbose=False, warm_start=None, eval_freq=10, **kwargs):
+	P, log, cost = sinkhorn_knopp_fast(a, b, C, reg, maxIter, stopThr, verbose, warm_start, eval_freq, **kwargs)
+
+	if torch.logical_or(torch.isnan(P), torch.isinf(P)).any() or torch.logical_or(torch.isnan(log['beta']), torch.isinf(log['beta'])).any():
+		P2, log2, cost2 = sinkhorn_knopp_slow(a, b, C, reg, maxIter, stopThr, verbose, warm_start, eval_freq, **kwargs)
+		return P2, log2, cost + cost2
+
+	return P, log, cost
+
+
+def sinkhorn_knopp_slow(a, b, C, reg=1e-1, maxIter=1000, stopThr=1e-9, verbose=False, warm_start=None, eval_freq=10, **kwargs):
 	"""
 	Solve the entropic regularization optimal transport
 	The input should be PyTorch tensors
@@ -187,5 +197,69 @@ def sinkhorn_knopp(a, b, C, reg=1e-1, maxIter=1000, stopThr=1e-9, verbose=False,
 
 	# transport plan
 	P = u.reshape(-1, 1) * K * v.reshape(1, -1)
+
+	return P, log, cost
+
+
+def sinkhorn_knopp_fast(a, b, C, reg=1e-1, maxIter=1000, stopThr=1e-9, verbose=False, warm_start=None, eval_freq=10, **kwargs):
+	device = a.device
+	na, nb = C.shape
+
+	assert na >= 1 and nb >= 1, 'C needs to be 2d'
+	assert na == a.shape[0] and nb == b.shape[0], "Shape of a or b does't match that of C"
+	assert reg > 0, 'reg should be greater than 0'
+	assert a.min() >= 0. and b.min() >= 0., 'Elements in a or b less than 0'
+
+	log = {'err': []}
+
+	if warm_start is not None:
+		u = warm_start['u']
+		v = warm_start['v']
+	else:
+		u = torch.ones(na, dtype=a.dtype).to(device) / na
+		v = torch.ones(nb, dtype=b.dtype).to(device) / nb
+
+	K = torch.empty(C.shape, dtype=C.dtype).to(device)
+	torch.div(C, -reg, out=K)
+	torch.exp(K, out=K)
+
+	b_hat = torch.empty(b.shape, dtype=C.dtype).to(device)
+
+	it = 1
+	err = 1
+
+	# allocate memory beforehand
+	KTu = torch.empty(v.shape, dtype=v.dtype).to(device)
+	Kv = torch.empty(u.shape, dtype=u.dtype).to(device)
+
+	cost = 0
+	pre_mul = time.time()
+
+	while (err > stopThr and it <= maxIter):
+
+		upre, vpre = u, v
+		torch.matmul(u, K, out=KTu)
+		v = torch.div(b, KTu + M_EPS)
+		torch.matmul(K, v, out=Kv)
+		u = torch.div(a, Kv + M_EPS)
+
+		if it % eval_freq == 0:
+			# we can speed up the process by checking for the error only all
+			# the eval_freq iterations
+			# below is equivalent to:
+			# b_hat = torch.sum(u.reshape(-1, 1) * K * v.reshape(1, -1), 0)
+			# but with more memory efficient
+			b_hat = torch.matmul(u, K) * v
+			err = (b - b_hat).pow(2).sum().item()
+			# err = (b - b_hat).abs().sum().item()
+			log['err'].append(err)
+
+		it += 1
+
+	log['beta'] = reg * torch.log(v + M_EPS)
+
+	# transport plan
+	P = u.reshape(-1, 1) * K * v.reshape(1, -1)
+	cost += time.time() - pre_mul
 
 	return P, log, cost
