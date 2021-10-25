@@ -79,6 +79,6 @@ def Process(txt_path, i, output, augmentation, min_size, max_size):
 			np.save(os.path.join(output, phase, f"img_{i}_noise.npy"), points)
 
 			blur_size = random_blur()
-			blurred_standard = Image.fromarray(cv2.blur(np.array(im), (blur_size, blur_size)))
+			blurred_standard = Image.fromarray(cv2.GaussianBlur(np.array(im), (blur_size, blur_size)))
 			blurred_standard.save(os.path.join(output, phase, f"img_{i}_blur.jpg"), quality=random_quality())
 			np.save(os.path.join(output, phase, f"img_{i}_blur.npy"), points)
