@@ -56,7 +56,7 @@ class Crowd(data.Dataset):
 		self.trans = transforms.Compose([transforms.ToTensor(), transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
 
 		self.method = method
-		if method not in ['train', 'val', 'test']:
+		if method not in ['train', 'val']:
 			raise Exception("Method not implemented")
 
 		if dataset in ('sha', 'shb'):
@@ -102,7 +102,7 @@ class Crowd(data.Dataset):
 
 		if self.method == 'train':
 			return self.train_transform(img, keypoints)
-		elif self.method == 'val' or self.method == 'test':
+		elif self.method == 'val':
 			img = self.trans(img)
 			return img, len(keypoints), name
 
