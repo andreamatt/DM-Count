@@ -47,7 +47,9 @@ def generate_data(im_path, min_size, max_size):
 		reader = csv.reader(csvfile, delimiter=";")
 		for x, y, c in reader:
 			r, g, b = hex_to_rgb(c)
-			if segmentation.getpixel((float(x), float(y))) == (r, g, b):
+			x = min(im_w-1, float(x))
+			y = min(im_h-1, float(y))
+			if segmentation.getpixel((x, y)) == (r, g, b):
 				points.append([float(x), float(y)])
 	if len(points)==0:
 		points = np.empty((0, 2))
