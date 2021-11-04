@@ -1,4 +1,5 @@
 import random
+from typing import List
 from skimage.util import random_noise
 from PIL import Image
 import numpy as np
@@ -37,3 +38,20 @@ def noisy(image):
 	noise_typ = random.choices(('gaussian', 's&p', 'poisson', 'speckle'), (0.3, 0.3, 0.3, 0.1))[0]
 	noisy = random_noise(image, mode=noise_typ)
 	return Image.fromarray((noisy * 255).astype(np.uint8))
+
+class ImageInfo:
+	def __init__(self, width, height, n_points):
+		self.width = width
+		self.height = height
+		self.n_points = n_points
+
+def printStats(infos: List[List[ImageInfo]]) -> None:
+	# flatten infos
+	infos = [info for sublist in infos for info in sublist]
+	infos = list(sorted(infos, key=lambda x: x.width*x.height))
+	median_res = infos[len(infos)//2]
+	infos = list(sorted(infos, key=lambda x: x.n_points))
+	median_points = infos[len(infos)//2]
+	avg_points = sum(x.n_points for x in infos) / len(infos)
+	avg_res = sum(x.width*x.height for x in infos) / len(infos)
+	print(f"Images: {len(infos)}, median resolution: {median_res.width}x{median_res.height}, avg res: {avg_res:.1f}, median points: {median_points.n_points}, avg points: {avg_points:.1f}")

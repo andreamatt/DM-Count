@@ -1,5 +1,6 @@
 from glob import glob
 import os
+from typing import List
 from PIL import Image, ImageFilter
 import numpy as np
 import csv
@@ -7,7 +8,7 @@ import random
 import shutil
 from joblib import Parallel, delayed
 import cv2
-from preprocess.util import cal_new_size, hex_to_rgb, noisy, random_blur, random_phase, random_quality
+from preprocess.util import ImageInfo, cal_new_size, hex_to_rgb, noisy, printStats, random_blur, random_phase, random_quality
 
 
 def main(input_dataset_path, output_dataset_path, augmentation, min_size, max_size, threads):
@@ -30,10 +31,8 @@ def main(input_dataset_path, output_dataset_path, augmentation, min_size, max_si
 		os.mkdir(os.path.join(output, 'test'))
 
 	print(f"{len(files)} images found")
-	Parallel(n_jobs=threads, verbose=10)(delayed(Process)(files[i], i, output, augmentation, min_size, max_size) for i in range(len(files)))
-	# for i in range(len(files)):
-	# 	print(files[i])
-	# 	Process(files[i], i, output, augmentation, min_size, max_size)
+	infos = Parallel(n_jobs=threads, verbose=10)(delayed(Process)(files[i], i, output, augmentation, min_size, max_size) for i in range(len(files)))
+	printStats(infos)
 
 
 def generate_data(im_path, min_size, max_size):
@@ -62,12 +61,14 @@ def generate_data(im_path, min_size, max_size):
 		points = points * rr
 	return im, points
 
-
-def Process(txt_path, i, output, augmentation, min_size, max_size):
+def Process(txt_path, i, output, augmentation, min_size, max_size) -> List[ImageInfo]:
 	standard_path = txt_path.replace(".txt", ".bmp")
 	segmentation_path = txt_path.replace(".txt", "_mask.bmp")
+
+	infos = []
 	if os.path.exists(standard_path) and os.path.exists(segmentation_path):
 		im, points = generate_data(standard_path, min_size, max_size)
+		infos.append(ImageInfo(im.width, im.height, len(points)))
 
 		phase = random_phase()
 
@@ -81,6 +82,10 @@ def Process(txt_path, i, output, augmentation, min_size, max_size):
 			np.save(os.path.join(output, phase, f"img_{i}_noise.npy"), points)
 
 			blur_size = random_blur()
-			blurred_standard = Image.fromarray(cv2.GaussianBlur(np.array(im), (blur_size, blur_size)))
+			blurred_standard = Image.fromarray(cv2.GaussianBlur(np.array(im), (blur_size, blur_size), np.random.randint(1, 4)))
 			blurred_standard.save(os.path.join(output, phase, f"img_{i}_blur.jpg"), quality=random_quality())
 			np.save(os.path.join(output, phase, f"img_{i}_blur.npy"), points)
+
+			infos = infos*3
+
+	return infos

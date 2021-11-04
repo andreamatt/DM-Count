@@ -1,12 +1,13 @@
 from glob import glob
 import os
+from typing import List
 from PIL import Image
 import numpy as np
 import shutil
 from joblib import Parallel, delayed
 from scipy.io import loadmat
 
-from preprocess.util import cal_new_size, random_phase, random_quality
+from preprocess.util import ImageInfo, cal_new_size, printStats, random_phase, random_quality
 
 
 def main(input_dataset_path, output_dataset_path, min_size, max_size, threads):
@@ -29,7 +30,8 @@ def main(input_dataset_path, output_dataset_path, min_size, max_size, threads):
 		os.mkdir(os.path.join(output, 'test'))
 
 	print(f"{len(files)} images found")
-	Parallel(n_jobs=threads, verbose=10)(delayed(Process)(files[i], i, output, min_size, max_size) for i in range(len(files)))
+	infos = Parallel(n_jobs=threads, verbose=10)(delayed(Process)(files[i], i, output, min_size, max_size) for i in range(len(files)))
+	printStats(infos)
 
 
 def generate_data(im_path, min_size, max_size):
@@ -55,3 +57,5 @@ def Process(img_path, i, output, min_size, max_size):
 
 	im.save(os.path.join(output, phase, f"img_{i}.jpg"), quality=random_quality())
 	np.save(os.path.join(output, phase, f"img_{i}.npy"), np.array(points))
+
+	return [ImageInfo(im.width, im.height, len(points))]

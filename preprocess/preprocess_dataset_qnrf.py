@@ -3,7 +3,7 @@ from PIL import Image
 import numpy as np
 import os
 from glob import glob
-from preprocess.util import cal_new_size
+from preprocess.util import ImageInfo, cal_new_size, printStats
 
 
 def generate_data(im_path, min_size, max_size):
@@ -22,6 +22,7 @@ def generate_data(im_path, min_size, max_size):
 
 
 def main(input_dataset_path, output_dataset_path, min_size, max_size):
+	infos = []
 	for phase in ['Train', 'Test']:
 		sub_dir = os.path.join(input_dataset_path, phase)
 		if phase == 'Train':
@@ -40,6 +41,7 @@ def main(input_dataset_path, output_dataset_path, min_size, max_size):
 						im.save(im_save_path)
 						gd_save_path = im_save_path.replace('jpg', 'npy')
 						np.save(gd_save_path, points)
+						infos.append([ImageInfo(im.width, im.height, len(points))])
 		else:
 			sub_save_dir = os.path.join(output_dataset_path, 'test')
 			if not os.path.exists(sub_save_dir):
@@ -53,3 +55,5 @@ def main(input_dataset_path, output_dataset_path, min_size, max_size):
 				im.save(im_save_path)
 				gd_save_path = im_save_path.replace('jpg', 'npy')
 				np.save(gd_save_path, points)
+				infos.append([ImageInfo(im.width, im.height, len(points))])
+	printStats(infos)

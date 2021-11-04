@@ -1,10 +1,11 @@
+from typing import List
 from scipy.io import loadmat
 from PIL import Image
 import numpy as np
 import os
 from joblib import Parallel, delayed
 import shutil
-from preprocess.util import cal_new_size, random_phase
+from preprocess.util import ImageInfo, cal_new_size, printStats, random_phase
 
 
 def generate_data(img_path, min_size, max_size):
@@ -22,13 +23,15 @@ def generate_data(img_path, min_size, max_size):
 	return im, points
 
 
-def Process(img_path, i, output, min_size, max_size):
+def Process(img_path, i, output, min_size, max_size) -> List[ImageInfo]:
 	im, points = generate_data(img_path, min_size, max_size)
 
 	phase = random_phase()
 
 	im.save(os.path.join(output, phase, f"img_{i}.jpg"))
 	np.save(os.path.join(output, phase, f"img_{i}.npy"), np.array(points))
+
+	return [ImageInfo(im.width, im.height, len(points))]
 
 
 def main(input_dataset_path, output_dataset_path, min_size, max_size, threads):
@@ -57,4 +60,5 @@ def main(input_dataset_path, output_dataset_path, min_size, max_size, threads):
 				all_images.append(im_path)
 
 	print(f'Found {len(all_images)} images')
-	Parallel(n_jobs=threads, verbose=10)(delayed(Process)(all_images[i], i, output_dataset_path, min_size, max_size) for i in range(len(all_images)))
+	infos = Parallel(n_jobs=threads, verbose=10)(delayed(Process)(all_images[i], i, output_dataset_path, min_size, max_size) for i in range(len(all_images)))
+	printStats(infos)
