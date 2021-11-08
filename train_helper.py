@@ -166,6 +166,7 @@ class Trainer(object):
 				outputs, _ = self.model(inputs)
 				res = count[0].item() - torch.sum(outputs).item()
 				epoch_res.append(res)
+				print(f"Validated {name}")
 
 		epoch_res = np.array(epoch_res)
 		mse = np.sqrt(np.mean(np.square(epoch_res)))
