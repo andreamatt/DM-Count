@@ -54,7 +54,7 @@ if __name__ == '__main__':
 	args = parse_args()
 	torch.backends.cudnn.benchmark = True
 	os.environ['CUDA_VISIBLE_DEVICES'] = args.device.strip()  # set vis gpu
-	os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:2000"
+	os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:4000"
 	trainer = Trainer(args)
 	trainer.setup()
 	trainer.train()
