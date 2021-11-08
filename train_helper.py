@@ -165,6 +165,7 @@ class Trainer(object):
 				inputs = inputs.to(self.device)
 				assert inputs.size(0) == 1, 'the batch size should equal to 1 in validation mode'
 				outputs, _ = self.model(inputs)
+				del inputs
 				res = count[0].item() - torch.sum(outputs).item()
 				epoch_res.append(res)
 
