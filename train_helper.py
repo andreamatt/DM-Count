@@ -161,7 +161,6 @@ class Trainer(object):
 		self.model.eval()  # Set model to evaluate mode
 		with torch.no_grad():
 			for inputs, count, name in self.dataloaders['val']:
-				print(f"Validating {name}")
 				inputs = inputs.to(self.device)
 				assert inputs.size(0) == 1, 'the batch size should equal to 1 in validation mode'
 				outputs, _ = self.model(inputs)
