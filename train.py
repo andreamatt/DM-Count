@@ -23,7 +23,7 @@ def parse_args():
 	parser.add_argument('--val-start', type=int, default=50, help='the epoch start to val')
 	parser.add_argument('--batch-size', type=int, default=10, help='train batch size')
 	parser.add_argument('--device', default='0', help='assign device')
-	parser.add_argument('--num-workers', type=int, default=1, help='the num of training process')
+	parser.add_argument('--num-workers', type=int, default=3, help='the num of training process')
 	parser.add_argument('--crop-size', type=int, default=512, help='the crop size of the train image')
 	parser.add_argument('--wot', type=float, default=0.1, help='weight on OT loss')
 	parser.add_argument('--wtv', type=float, default=0.01, help='weight on TV loss')
