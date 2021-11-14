@@ -88,6 +88,7 @@ class Crowd(data.Dataset):
 				# copy only n random images
 				n = len(self.im_list)
 				synth_count = len(synth.im_list)
+				print(f"Found {synth_count} synth images, sampling {n} of them")
 				indices = np.random.choice(list(range(synth_count)), n, replace=False)
 				for i in indices:
 					self.im_list.append(synth.im_list[i])
