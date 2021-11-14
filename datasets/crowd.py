@@ -84,7 +84,7 @@ class Crowd(data.Dataset):
 			if dataset == 'synth':
 				raise Exception("Cannot mix synth with synth")
 			else:
-				synth = Crowd('synth', synth_path, crop_size, downsample_ratio, method)
+				synth = Crowd('synth', os.path.join(synth_path, method), crop_size, downsample_ratio, method)
 				# copy only n random images
 				n = len(self.im_list)
 				synth_count = len(synth.im_list)
