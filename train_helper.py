@@ -52,8 +52,8 @@ class Trainer(object):
 		train_subdir = 'train' if args.dataset.lower() in ('qnrf', 'nwpu', 'synth', 'gcc') else 'train_data'
 		test_subdir = 'val' if args.dataset.lower() in ('qnrf', 'nwpu', 'synth', 'gcc') else 'test_data'
 		self.datasets = {
-		    'train': Crowd(args.dataset.lower(), os.path.join(args.data_dir, train_subdir), args.crop_size, downsample_ratio, 'train', args.mixed, args.synth_path),
-		    'val': Crowd(args.dataset.lower(), os.path.join(args.data_dir, test_subdir), args.crop_size, downsample_ratio, 'val', args.mixed, args.synth_path),
+		    'train': Crowd(args.dataset.lower(), os.path.join(args.data_dir, train_subdir), args.crop_size, downsample_ratio, 'train', args.mixed, args.mix_val, args.synth_path),
+		    'val': Crowd(args.dataset.lower(), os.path.join(args.data_dir, test_subdir), args.crop_size, downsample_ratio, 'val', args.mixed, args.mix_val, args.synth_path),
 		}
 
 		self.dataloaders = {x: DataLoader(self.datasets[x], collate_fn=(train_collate if x == 'train' else default_collate), batch_size=(args.batch_size if x == 'train' else 1), shuffle=(True if x == 'train' else False), num_workers=args.num_workers * self.device_count, pin_memory=(True if x == 'train' else False)) for x in ['train', 'val']}

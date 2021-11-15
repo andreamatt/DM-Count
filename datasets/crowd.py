@@ -46,7 +46,7 @@ def gen_discrete_map(im_height, im_width, points):
 
 
 class Crowd(data.Dataset):
-	def __init__(self, dataset, root_path, crop_size, downsample_ratio=8, method='train', mixed=False, synth_path=None):
+	def __init__(self, dataset, root_path, crop_size, downsample_ratio=8, method='train', mixed=False, mix_val=False, synth_path=None):
 		self.root_path = root_path
 		self.c_size = crop_size
 		self.d_ratio = downsample_ratio
@@ -80,7 +80,7 @@ class Crowd(data.Dataset):
 		else:
 			raise Exception("Dataset not supported")
 
-		if mixed:
+		if mixed and (method=='train' or mix_val):
 			if dataset == 'synth':
 				raise Exception("Cannot mix synth with synth")
 			else:

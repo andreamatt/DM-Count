@@ -14,6 +14,7 @@ def parse_args():
 	parser.add_argument('--save-dir', default='ckpts/SHA', help='checkpoint save directory')
 	parser.add_argument('--dataset', default='sha', help='dataset name: qnrf, nwpu, sha, shb, synth, gcc')
 	parser.add_argument('--mixed', type=str2bool, default=False, help='mix dataset with synth')
+	parser.add_argument('--mix-val', type=str2bool, default=False, help='mix dataset with synth')
 	parser.add_argument('--synth-path', default='DATA/processed/Synth', help='synth path for mixing')
 	parser.add_argument('--lr', type=float, default=1e-5, help='the initial learning rate')
 	parser.add_argument('--weight-decay', type=float, default=1e-4, help='the weight decay')
@@ -54,7 +55,7 @@ if __name__ == '__main__':
 	args = parse_args()
 	torch.backends.cudnn.benchmark = True
 	os.environ['CUDA_VISIBLE_DEVICES'] = args.device.strip()  # set vis gpu
-	os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:400"
+	os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:200"
 	trainer = Trainer(args)
 	trainer.setup()
 	trainer.train()
