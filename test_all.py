@@ -97,7 +97,7 @@ if __name__ == "__main__":
             print(f"Testing {tr['path']} on {test['path']}, mixed: {'mixed' in test}")
             start = time.time()
             args = Args(
-                0,
+                "0",
                 512,
                 tr["path"],
                 test["path"],
