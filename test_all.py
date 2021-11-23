@@ -1,4 +1,5 @@
 import os
+import time
 
 if __name__ == "__main__":
 
@@ -76,7 +77,9 @@ if __name__ == "__main__":
 
     for tr in trained:
         print(f"Testing {tr['path']}")
+        start_tr = time.time()
         for test in test_types:
+            start = time.time()
             print("-" * 10)
             print(f"On {test['path']}, mixed: {'mixed' in test}")
             if "mixed" in test:
@@ -87,5 +90,6 @@ if __name__ == "__main__":
                 os.system(
                     f"python ./test.py --model-path {tr['path']} --data-path {test['path']} --dataset {test['type']}"
                 )
-        print("-" * 20)
+            print(f"Time taken: {time.time() - start}")
+        print("-" * 10 + f"  Time taken: {time.time() - start_tr}  " + "-" * 10)
         print("-" * 20)
