@@ -6,7 +6,7 @@ if __name__ == "__main__":
     trained = [
         {
             "type": "gcc",
-            "path": "gcc.pth",
+            "path": "trained/gcc.pth",
         },
         {
             "type": "synth",
