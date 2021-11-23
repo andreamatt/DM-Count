@@ -80,7 +80,7 @@ def main():
             outputs, _ = model(inputs)
         img_err = count[0].item() - torch.sum(outputs).item()
 
-        print(name, img_err, count[0].item(), torch.sum(outputs).item())
+        # print(name, img_err, count[0].item(), torch.sum(outputs).item())
         image_errs.append(img_err)
 
     image_errs = np.array(image_errs)
