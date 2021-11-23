@@ -10,7 +10,7 @@ def str2bool(v):
     return str(v).lower() in ("yes", "true", "t", "1")
 
 
-def main():
+def parse_args():
     parser = argparse.ArgumentParser(description="Test")
     parser.add_argument("--device", default="0", help="assign device")
     parser.add_argument(
@@ -42,6 +42,10 @@ def main():
     )
 
     args = parser.parse_args()
+    return args
+
+
+def main(args):
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.device  # set vis gpu
     device = torch.device("cuda")
@@ -90,4 +94,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(parse_args())

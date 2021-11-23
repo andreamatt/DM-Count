@@ -1,5 +1,19 @@
 import time
 
+
+class Args:
+    def __init__(
+        self, device, crop_size, model_path, data_path, dataset, mixed, synth_path
+    ):
+        self.device = device
+        self.crop_size = crop_size
+        self.model_path = model_path
+        self.data_path = data_path
+        self.dataset = dataset
+        self.mixed = mixed
+        self.synth_path = synth_path
+
+
 if __name__ == "__main__":
     from test import main as test_main
 
@@ -79,17 +93,20 @@ if __name__ == "__main__":
         print(f"Testing {tr['path']}")
         start_tr = time.time()
         for test in test_types:
-            start = time.time()
             print("-" * 10)
-            print(f"On {test['path']}, mixed: {'mixed' in test}")
-            if "mixed" in test:
-                test_main(
-                    f"--model-path {tr['path']} --data-path {test['path']} --dataset {test['type']} --mixed true --synth-path DATA/processed/SynthAug"
-                )
-            else:
-                test_main(
-                    f"--model-path {tr['path']} --data-path {test['path']} --dataset {test['type']}"
-                )
+            print(f"Testing {tr['path']} on {test['path']}, mixed: {'mixed' in test}")
+            start = time.time()
+            args = Args(
+                0,
+                512,
+                tr["path"],
+                test["path"],
+                test["type"],
+                "mixed" in test,
+                "DATA/processed/SynthAug",
+            )
+            test_main(args)
+
             print(f"Time taken: {time.time() - start}")
         print("-" * 10 + f"  Time taken: {time.time() - start_tr}  " + "-" * 10)
         print("-" * 20)
