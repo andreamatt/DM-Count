@@ -10,67 +10,67 @@ if __name__ == "__main__":
         },
         {
             "type": "synth",
-            "path": "synth.pth",
+            "path": "trained/synth.pth",
         },
         {
             "type": "synth",
-            "path": "synthaug.pth",
+            "path": "trained/synthaug.pth",
         },
         {
             "type": "nwpu",
-            "path": "nwpu_normal.pth",
+            "path": "trained/nwpu_normal.pth",
         },
         {
             "type": "nwpu",
-            "path": "nwpu_mixed.pth",
+            "path": "trained/nwpu_mixed.pth",
         },
         {
             "type": "nwpu",
-            "path": "nwpu_noval.pth",
+            "path": "trained/nwpu_noval.pth",
         },
         {
             "type": "qnrf",
-            "path": "qnrf_normal.pth",
+            "path": "trained/qnrf_normal.pth",
         },
         {
             "type": "qnrf",
-            "path": "qnrf_mixed.pth",
+            "path": "trained/qnrf_mixed.pth",
         },
         {
             "type": "qnrf",
-            "path": "qnrf_noval.pth",
+            "path": "trained/qnrf_noval.pth",
         },
     ]
 
     test_types = [
         {
             "type": "gcc",
-            "path": "./DATA/processed/GCC",
+            "path": "DATA/processed/GCC",
         },
         {
             "type": "synth",
-            "path": "./DATA/processed/Synth",
+            "path": "DATA/processed/Synth",
         },
         {
             "type": "synth",
-            "path": "./DATA/processed/SynthAug",
+            "path": "DATA/processed/SynthAug",
         },
         {
             "type": "nwpu",
-            "path": "./DATA/processed/NWPU",
+            "path": "DATA/processed/NWPU",
         },
         {
             "type": "nwpu",
-            "path": "./DATA/processed/NWPU",
+            "path": "DATA/processed/NWPU",
             "mixed": True,
         },
         {
             "type": "qnrf",
-            "path": "./DATA/processed/QNRF",
+            "path": "DATA/processed/QNRF",
         },
         {
             "type": "qnrf",
-            "path": "./DATA/processed/QNRF",
+            "path": "DATA/processed/QNRF",
             "mixed": True,
         },
     ]
