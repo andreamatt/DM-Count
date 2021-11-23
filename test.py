@@ -26,25 +26,19 @@ def main():
         "--data-path",
         type=str,
         default="data/QNRF-Train-Val-Test",
-        help="saved model path",
+        help="data path",
     )
     parser.add_argument(
         "--dataset",
         type=str,
         default="qnrf",
-        help="dataset name: qnrf, nwpu, sha, shb, synth, gcc",
+        help="dataset name: qnrf, nwpu, synth, gcc",
     )
     parser.add_argument(
         "--mixed", type=str2bool, default=False, help="mix dataset with synth"
     )
     parser.add_argument(
-        "--synth-path", default="DATA/processed/Synth", help="synth path for mixing"
-    )
-    parser.add_argument(
-        "--pred-density-map-path",
-        type=str,
-        default="",
-        help="save predicted density maps when pred-density-map-path is not empty.",
+        "--synth-path", default="DATA/processed/SynthAug", help="synth path for mixing"
     )
 
     args = parser.parse_args()
@@ -68,26 +62,16 @@ def main():
             crop_size,
             8,
             method="val",
-        )
-    elif args.dataset.lower() in ["sha", "shb"]:
-        dataset = crowd.Crowd(
-            args.dataset.lower(),
-            os.path.join(data_path, "test_data"),
-            crop_size,
-            8,
-            method="val",
+            mixed=args.mixed,
+            mix_val=True,
+            synth_path=args.synth_path,
         )
     else:
         raise NotImplementedError
+
     dataloader = torch.utils.data.DataLoader(
         dataset, 1, shuffle=False, num_workers=1, pin_memory=True
     )
-
-    if args.pred_density_map_path:
-        import cv2
-
-        if not os.path.exists(args.pred_density_map_path):
-            os.makedirs(args.pred_density_map_path)
 
     for inputs, count, name in dataloader:
         inputs = inputs.to(device)
@@ -98,16 +82,6 @@ def main():
 
         print(name, img_err, count[0].item(), torch.sum(outputs).item())
         image_errs.append(img_err)
-
-        if args.pred_density_map_path:
-            vis_img = outputs[0, 0].cpu().numpy()
-            # normalize density map values from 0 to 1, then map it to 0-255.
-            vis_img = (vis_img - vis_img.min()) / (vis_img.max() - vis_img.min() + 1e-5)
-            vis_img = (vis_img * 255).astype(np.uint8)
-            vis_img = cv2.applyColorMap(vis_img, cv2.COLORMAP_JET)
-            cv2.imwrite(
-                os.path.join(args.pred_density_map_path, str(name[0]) + ".png"), vis_img
-            )
 
     image_errs = np.array(image_errs)
     mse = np.sqrt(np.mean(np.square(image_errs)))
