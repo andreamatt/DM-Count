@@ -61,7 +61,7 @@ def main():
             os.path.join(data_path, "test"),
             crop_size,
             8,
-            method="val",
+            method="test",
             mixed=args.mixed,
             mix_val=True,
             synth_path=args.synth_path,

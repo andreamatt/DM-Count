@@ -76,7 +76,7 @@ class Crowd(data.Dataset):
         )
 
         self.method = method
-        if method not in ["train", "val"]:
+        if method not in ["train", "val", "test"]:
             raise Exception("Method not implemented")
 
         if dataset in ("sha", "shb"):
@@ -134,9 +134,11 @@ class Crowd(data.Dataset):
 
         if self.method == "train":
             return self.train_transform(img, keypoints)
-        elif self.method == "val":
+        elif self.method in ["val", "test"]:
             img = self.trans(img)
             return img, len(keypoints), name
+        else:
+            raise Exception("Method not supported")
 
     def train_transform(self, img, keypoints):
         wd, ht = img.size
